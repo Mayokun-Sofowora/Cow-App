@@ -24,6 +24,21 @@ class SelectCowPageState extends State<SelectCowPage> {
   @override
   void initState() {
     super.initState();
+    _loadSavedData();
+  }
+
+  void _loadSavedData() {
+    final cowProvider = Provider.of<CowProvider>(context, listen: false);
+    setState(() {
+      _selectedCowId = cowProvider.selectedCowId;
+      _startDateTime = cowProvider.startTimestamp;
+      _endDateTime = cowProvider.endTimestamp;
+    });
+    if (_selectedCowId != null &&
+        _startDateTime != null &&
+        _endDateTime != null) {
+      _fetchCowsData();
+    }
   }
 
   // Fetch available cow IDs based on selected date and time
@@ -58,7 +73,12 @@ class SelectCowPageState extends State<SelectCowPage> {
             _errorMessage = 'No cows found for the selected time range';
           }
         });
-      }
+      }else {
+          // Store the selected cow in the provider
+          _selectedCowId = ids.first; // Automatically select the first available cow ID
+          Provider.of<CowProvider>(context, listen: false)
+              .setSelectedTimeRange(_startDateTime!, _endDateTime!);
+        }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -99,9 +119,11 @@ class SelectCowPageState extends State<SelectCowPage> {
         setState(() {
           _cows = cows; // Assign the list of cows to the state variable
           _isLoading = false;
+          if (cows.isEmpty) {
+            _errorMessage = 'No cows found for the selected time range';
+          }
         });
       }
-
       if (cows.isNotEmpty) {
         // Store the selected cow and time range in the provider
         Provider.of<CowProvider>(context, listen: false)
@@ -234,9 +256,6 @@ class SelectCowPageState extends State<SelectCowPage> {
                 const Center(child: CircularProgressIndicator())
               else if (_errorMessage.isNotEmpty)
                 Center(child: Text(_errorMessage))
-              else if (_cowIds.isEmpty)
-                const Center(
-                    child: Text('No cows found for the selected time range'))
               else ...[
                 const Padding(
                   padding: EdgeInsets.all(8.0),

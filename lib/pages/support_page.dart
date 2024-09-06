@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 
-class HelpSupportPage extends StatelessWidget {
+class HelpSupportPage extends StatefulWidget {
   const HelpSupportPage({super.key});
+
+  @override
+  HelpSupportPageState createState() => HelpSupportPageState();
+}
+
+class HelpSupportPageState extends State<HelpSupportPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'package:cow_monitor/services/provider_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,17 +19,41 @@ class ProfilePageState extends State<ProfilePage> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // Function to pick a new profile picture
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    setState(() {
+      _name = pref.getString('name') ?? 'Jane Doe';
+      _email = pref.getString('email') ?? 'janedoe@example.com';
+      _phone = pref.getString('phone') ?? '+1 123 456 7890';
+      _profileImageUrl = pref.getString('profileImageUrl') ??
+          'https://res.cloudinary.com/dtkpg6jgv/image/upload/v1722962830/cld-sample.jpg';
+    });
+  }
+
+  Future<void> _saveProfileData() async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    await pref.setString('name', _name);
+    await pref.setString('email', _email);
+    await pref.setString('phone', _phone);
+    await pref.setString('profileImageUrl', _profileImageUrl);
+  }
+
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
         _profileImageUrl = image.path;
       });
+      _saveProfileData(); // Save the updated profile picture path
     }
   }
 
-  // Function to edit name
   void _editName() {
     TextEditingController nameController = TextEditingController(text: _name);
     showDialog(
@@ -50,6 +73,7 @@ class ProfilePageState extends State<ProfilePage> {
                 setState(() {
                   _name = nameController.text;
                 });
+                _saveProfileData(); // Save the updated name
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
@@ -66,7 +90,6 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Function to edit email
   void _editEmail() {
     TextEditingController emailController = TextEditingController(text: _email);
     showDialog(
@@ -86,6 +109,7 @@ class ProfilePageState extends State<ProfilePage> {
                 setState(() {
                   _email = emailController.text;
                 });
+                _saveProfileData(); // Save the updated email
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
@@ -102,7 +126,6 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Function to edit phone number
   void _editNumber() {
     TextEditingController phoneController = TextEditingController(text: _phone);
     showDialog(
@@ -123,6 +146,7 @@ class ProfilePageState extends State<ProfilePage> {
                 setState(() {
                   _phone = phoneController.text;
                 });
+                _saveProfileData(); // Save the updated phone number
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
@@ -132,61 +156,6 @@ class ProfilePageState extends State<ProfilePage> {
                 Navigator.of(context).pop();
               },
               child: const Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Update _showNotificationPreferences function
-  void _showNotificationPreferences() {
-    // Load current preferences from CowProvider (if applicable)
-    final cowProvider = Provider.of<CowProvider>(context, listen: false);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Notify Me By'),
-          content: SingleChildScrollView(
-            // Wrap in SingleChildScrollView to avoid overflow
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CheckboxListTile(
-                  title: const Text('Email'),
-                  value: cowProvider.emailNotifications,
-                  onChanged: (bool? value) {
-                    // Update provider directly and notify listeners
-                    cowProvider.toggleEmailNotifications(value ?? false);
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text('SMS'),
-                  value: cowProvider.smsNotifications,
-                  onChanged: (bool? value) {
-                    // Update provider directly and notify listeners
-                    cowProvider.toggleSmsNotifications(value ?? false);
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text('Push'),
-                  value: cowProvider.pushNotifications,
-                  onChanged: (bool? value) {
-                    // Update provider directly and notify listeners
-                    cowProvider.togglePushNotifications(value ?? false);
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
             ),
           ],
         );
@@ -206,7 +175,6 @@ class ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Profile Picture
               GestureDetector(
                 onTap: _pickImage,
                 child: CircleAvatar(
@@ -217,8 +185,6 @@ class ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // User Name
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -232,8 +198,6 @@ class ProfilePageState extends State<ProfilePage> {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // Email
               Text(
                 _email,
                 style: const TextStyle(
@@ -242,8 +206,6 @@ class ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Editable Fields
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Full Name'),
@@ -269,34 +231,6 @@ class ProfilePageState extends State<ProfilePage> {
                 trailing: IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: _editNumber,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              ListTile(
-                leading: const Icon(Icons.lock),
-                title: const Text('Change Password'),
-                onTap: () {
-                  // Handle password change
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.notifications),
-                title: const Text('Notification Preferences'),
-                onTap: _showNotificationPreferences,
-              ),
-              const SizedBox(height: 20),
-
-              // Logout Button
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Handle user logout
-                },
-                icon: const Icon(Icons.logout),
-                label: const Text('Logout'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
                 ),
               ),
             ],

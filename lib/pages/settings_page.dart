@@ -5,39 +5,28 @@ import 'package:cow_monitor/services/provider_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
-  final String currentStreamUrl;
 
-  SettingsPage({
+  const SettingsPage({
     super.key,
     required this.onToggleDarkMode,
-    required this.currentStreamUrl,
   });
 
-  // List of streams
-  final List<Map<String, String>> streams = [
-    {
-      'name': 'Stream Video',
-      'url': 'http://140.116.86.242:25582/stream_video'
-    },
-    {
-      'name': 'Pixel Video',
-      'url': 'https://videos.pexels.com/video-files/856065/856065-hd_1920_1080_30fps.mp4'
-    },
-  ];
+  @override
+  SettingsPageState createState() => SettingsPageState();
+}
+
+class SettingsPageState extends State<SettingsPage> {
+
+  String get selectedStreamUrl {
+    final provider = Provider.of<CowProvider>(context, listen: false);
+    return provider.currentStreamUrl;
+  }
 
   void _showStreamSelectionDialog(BuildContext context, CowProvider provider) {
-    int? selectedStreamIndex;
-
-    // Find the currently selected stream index
-    for (int i = 0; i < streams.length; i++) {
-      if (streams[i]['url'] == provider.currentStreamUrl) {
-        selectedStreamIndex = i;
-        break;
-      }
-    }
-
+    int? selectedStreamIndex = provider.streams.indexWhere((stream) =>
+        stream['url'] == provider.currentStreamUrl);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -47,17 +36,16 @@ class SettingsPage extends StatelessWidget {
             height: 200,
             width: 300,
             child: ListView.builder(
-              itemCount: streams.length,
+              itemCount: provider.streams.length,
               itemBuilder: (context, index) {
                 return RadioListTile<int>(
-                  title: Text(streams[index]['name']!),
+                  title: Text(provider.streams[index]['name']!),
                   value: index,
                   groupValue: selectedStreamIndex,
                   onChanged: (value) {
                     if (value != null) {
-                      selectedStreamIndex = value;
-                      provider.setCurrentStreamUrl(streams[value]['url']!);
-                      Navigator.of(context).pop(); // Close the dialog after selection
+                      provider.setCurrentStreamUrl(provider.streams[value]['url']!);
+                      Navigator.of(context).pop();
                     }
                   },
                 );
@@ -87,7 +75,7 @@ class SettingsPage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         children: <Widget>[
           ListTile(
-            leading: const Icon(Icons.person), // Icon for Profile
+            leading: const Icon(Icons.person),
             title: const Text('Profile'),
             onTap: () {
               Navigator.push(
@@ -97,33 +85,33 @@ class SettingsPage extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.live_tv), // Icon for Cow Stream
+            leading: const Icon(Icons.live_tv),
             title: const Text('Cow Stream'),
-            subtitle: Text(streams.firstWhere((stream) => stream['url'] == provider.currentStreamUrl)['name']!),
             onTap: () {
               _showStreamSelectionDialog(context, provider);
             },
           ),
           ListTile(
-            leading: const Icon(Icons.notifications), // Icon for Notifications
+            leading: const Icon(Icons.notifications),
             title: const Text('Notifications'),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                MaterialPageRoute(
+                    builder: (context) => const NotificationsPage()),
               );
             },
           ),
           SwitchListTile(
-            secondary: const Icon(Icons.dark_mode), // Icon for Dark Mode
+            secondary: const Icon(Icons.dark_mode),
             title: const Text('Dark Mode'),
             value: provider.isDarkMode,
             onChanged: (bool value) {
-              provider.toggleDarkMode(value);
+              widget.onToggleDarkMode(value);
             },
           ),
           ListTile(
-            leading: const Icon(Icons.backup), // Icon for Backup & Restore
+            leading: const Icon(Icons.backup),
             title: const Text('Backup & Restore'),
             onTap: () {
               showDialog(
@@ -145,17 +133,18 @@ class SettingsPage extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.help), // Icon for Help & Support
+            leading: const Icon(Icons.help),
             title: const Text('Help & Support'),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const HelpSupportPage()),
+                MaterialPageRoute(
+                    builder: (context) => const HelpSupportPage()),
               );
             },
           ),
           ListTile(
-            leading: const Icon(Icons.info), // Icon for About App
+            leading: const Icon(Icons.info),
             title: const Text('About App'),
             onTap: () {
               showDialog(

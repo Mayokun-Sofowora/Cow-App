@@ -8,20 +8,17 @@ class BarChartService {
     return Theme.of(context).brightness == Brightness.dark;
   }
 
-  Widget createBarChart(BuildContext context, List<CowAction> cowActions,
-      String selectedBehavior) {
+  Widget createBarChart(BuildContext context, List<CowAction> cowActions, String selectedBehavior) {
     bool darkMode = isDarkMode(context);
 
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: 60, // Adjusted for maximum Y value
+        maxY: 60,  // Maximum value for the Y-axis
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              // Create a tooltip for the selected behavior
-              final action =
-                  cowActions.firstWhere((a) => a.name == selectedBehavior);
+              final action = cowActions.firstWhere((a) => a.name == selectedBehavior, orElse: () => CowAction('Unknown', 0));
               return BarTooltipItem(
                 '${action.name}\n${TimeUtils.formatTimeSpent(rod.toY.toInt())}',
                 const TextStyle(color: Colors.white),
@@ -97,37 +94,43 @@ class BarChartService {
           show: true,
           border: Border.all(color: const Color(0xff37434d), width: 1),
         ),
-        barGroups:
-            _getBarGroupsForSelectedBehavior(cowActions, selectedBehavior),
+        barGroups: _getBarGroupsForSelectedBehavior(cowActions),
       ),
     );
   }
 
-  List<BarChartGroupData> _getBarGroupsForSelectedBehavior(
-      List<CowAction> cowActions, String selectedBehavior) {
+  List<BarChartGroupData> _getBarGroupsForSelectedBehavior(List<CowAction> cowActions) {
     List<BarChartGroupData> barGroups = [];
 
-    final action = cowActions.firstWhere((a) => a.name == selectedBehavior);
-
-    // Calculate the total time spent
-    final totalTimeSpent = action.timeSpent;
-    // Generate accumulated minutes for each 4-hour period
-    for (int hour = 0; hour < 24; hour += 2) {
-      // Calculate minutes for this 4-hour period (distribute time evenly)
-      final minutesForPeriod = (totalTimeSpent / 4).round();
-
+    // Calculate total time spent
+    for (int i = 0; i < cowActions.length; i++) {
+      final action = cowActions[i];
       barGroups.add(BarChartGroupData(
-        x: hour,
+        x: i,
         barRods: [
           BarChartRodData(
-            color: Colors.deepPurple,
-            fromY: 0,
-            toY: minutesForPeriod.toDouble(),
-            borderRadius: BorderRadius.circular(0),
+            toY: action.timeSpent.toDouble(), // Use time spent for the Y value
+            color: _getBarColor(action.name),
           ),
         ],
       ));
     }
+
     return barGroups;
+  }
+
+  Color _getBarColor(String actionName) {
+    switch (actionName) {
+      case 'Eating':
+        return Colors.green;
+      case 'Keeping still':
+        return Colors.blue;
+      case 'Standing':
+        return Colors.orange;
+      case 'Walking':
+        return Colors.red;  
+      default:
+        return Colors.grey; // Default color for unknown actions
+    }
   }
 }

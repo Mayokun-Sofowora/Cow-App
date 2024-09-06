@@ -2,8 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/provider_service.dart';
 
-class TrackingPage extends StatelessWidget {
+class TrackingPage extends StatefulWidget {
   const TrackingPage({super.key});
+
+  @override
+  TrackingPageState createState() => TrackingPageState();
+}
+
+class TrackingPageState extends State<TrackingPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

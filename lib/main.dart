@@ -9,6 +9,7 @@ import 'pages/settings_page.dart';
 import 'pages/tracking_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
       providers: [
@@ -26,20 +27,38 @@ class CowMonitor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<CowProvider>(
-      // Update Consumer type to CowProvider
       builder: (context, provider, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Cow Monitor',
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark(),
+          theme: ThemeData(
+            primarySwatch: Colors.green,
+            brightness: Brightness.light,
+            appBarTheme: AppBarTheme(
+              backgroundColor: Colors.green[600],
+              elevation: 0,
+              titleTextStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+              ),
+            ),
+          ),
+          darkTheme: ThemeData(
+            primarySwatch: Colors.green,
+            brightness: Brightness.dark,
+            appBarTheme: AppBarTheme(
+              backgroundColor: Colors.green[600],
+              elevation: 0,
+              titleTextStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+              ),
+            ),
+          ),
           themeMode: provider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          themeAnimationDuration: Duration.zero,
-          home: Screen(
+          home: MainScreen(
             onToggleDarkMode: provider.toggleDarkMode,
-            currentStreamUrl: provider.currentStreamUrl,
             onStreamSelected: provider.setCurrentStreamUrl,
-            videoTimestamp: 1724093350, // Change the video timestamp later
           ),
         );
       },
@@ -47,102 +66,61 @@ class CowMonitor extends StatelessWidget {
   }
 }
 
-class Screen extends StatefulWidget {
+class MainScreen extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
-  final String currentStreamUrl;
   final Function(String) onStreamSelected;
-  final int videoTimestamp;
 
-  const Screen({
+  const MainScreen({
     super.key,
     required this.onToggleDarkMode,
-    required this.currentStreamUrl,
     required this.onStreamSelected,
-    required this.videoTimestamp,
   });
 
   @override
-  ScreenState createState() => ScreenState();
+  MainScreenState createState() => MainScreenState();
 }
 
-class ScreenState extends State<Screen> {
+class MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+
+  final List<Widget> _pages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _pages.addAll([
+      const HomePage(),
+      const SelectCowPage(),
+      const BehaviorPage(),
+      const TrackingPage(),
+      SettingsPage(onToggleDarkMode: widget.onToggleDarkMode),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> pages = [
-      {
-        'title': const Text('Home Screen'),
-        'page': HomePage(
-            videoUrl: widget.currentStreamUrl,
-            timestamp: widget.videoTimestamp),
-      },
-      {
-        'title': const Text('Select Cow'),
-        'page': const SelectCowPage(),
-      },
-      {
-        'title': const Text('Behavior Records'),
-        'page': const BehaviorPage(),
-      },
-      {
-        'title': const Text('Movement Tracking'),
-        'page': const TrackingPage(),
-      },
-      {
-        'title': const Text('Settings'),
-        'page': SettingsPage(
-          onToggleDarkMode: widget.onToggleDarkMode,
-          currentStreamUrl: widget.currentStreamUrl,
-        ),
-      },
-    ];
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Cow Monitor',
-          style: TextStyle(
-            fontSize: 24,
-            fontFamily: 'Roboto',
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
-        backgroundColor: Colors.green[800],
-        elevation: 4,
-        centerTitle: true,
-      ),
-      body: Center(
-        child: pages[_selectedIndex]['page'],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.pets), label: 'Select Cow'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+              icon: Icon(Icons.bar_chart), label: 'Behavior'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.pets),
-            label: 'Select Cow',
-          ),
+              icon: Icon(Icons.track_changes), label: 'Tracking'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Behavior',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.track_changes),
-            label: 'Tracking',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
+              icon: Icon(Icons.settings), label: 'Settings'),
         ],
         currentIndex: _selectedIndex,
-        unselectedItemColor: Colors.lightGreen[100],
-        selectedItemColor: Colors.green[800],
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.deepPurple[600]
+            : Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
         onTap: (index) {
           setState(() {
             _selectedIndex = index;

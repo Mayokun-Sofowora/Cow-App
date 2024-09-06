@@ -18,9 +18,17 @@ class CowProvider with ChangeNotifier {
   bool _smsNotifications = false;
   bool _pushNotifications = false;
 
-  // Dark mode and stream URL
+  // Dark mode and stream URLs
   bool _isDarkMode = false;
   String _currentStreamUrl = 'http://140.116.86.242:25582/stream_video';
+  final List<Map<String, String>> _streams = [
+    {'name': 'Stream Video', 'url': 'http://140.116.86.242:25582/stream_video'},
+    {
+      'name': 'Pixel Video',
+      'url':
+          'https://videos.pexels.com/video-files/856065/856065-hd_1920_1080_30fps.mp4'
+    },
+  ];
 
   // Getters for cow selection
   Cow? get selectedCow => _selectedCow;
@@ -39,6 +47,9 @@ class CowProvider with ChangeNotifier {
   bool get pushNotifications => _pushNotifications;
   String get currentStreamUrl => _currentStreamUrl;
 
+  // Getters for stream URLs
+  List<Map<String, String>> get streams => _streams;
+
   CowProvider() {
     _loadSettings(); // Load settings on initialization
   }
@@ -46,6 +57,13 @@ class CowProvider with ChangeNotifier {
   // Load settings from SharedPreferences
   Future<void> _loadSettings() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
+
+    _selectedCowId = pref.getInt('selectedCowId');
+    String? startTime = pref.getString('startTimestamp');
+    String? endTime = pref.getString('endTimestamp');
+    if (startTime != null) _startTimestamp = DateTime.parse(startTime);
+    if (endTime != null) _endTimestamp = DateTime.parse(endTime);
+
     _notificationsEnabled = pref.getBool('notificationsEnabled') ?? true;
     _alertsEnabled = pref.getBool('alertsEnabled') ?? true;
     _messagesEnabled = pref.getBool('messagesEnabled') ?? true;
@@ -53,12 +71,44 @@ class CowProvider with ChangeNotifier {
     _isDarkMode = pref.getBool('isDarkMode') ?? false;
     _currentStreamUrl = pref.getString('currentStreamUrl') ??
         'http://140.116.86.242:25582/stream_video';
+
+    if (_selectedCowId != null &&
+        _startTimestamp != null &&
+        _endTimestamp != null) {
+      // Load the selected cow data
+      CowRepository cowRepository = CowRepository();
+
+      List<int> cowIds = await cowRepository.fetchCowIds(
+          _startTimestamp!.millisecondsSinceEpoch ~/ 1000,
+          _endTimestamp!.millisecondsSinceEpoch ~/ 1000);
+      if (cowIds.isNotEmpty) {
+        _selectedCowId ??= cowIds.first;
+      }
+      List<Cow> cows = await cowRepository.fetchCowData(
+          _startTimestamp!.millisecondsSinceEpoch ~/ 1000,
+          _endTimestamp!.millisecondsSinceEpoch ~/ 1000,
+          _selectedCowId!);
+      if (cows.isNotEmpty) {
+        _selectedCow = cows.first;
+      }
+    }
     notifyListeners();
   }
 
   // Save settings to SharedPreferences
   Future<void> _saveSettings() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
+    if (_selectedCowId != null) {
+      await pref.setInt('selectedCowId', _selectedCowId!);
+    }
+    if (_startTimestamp != null) {
+      await pref.setString(
+          'startTimestamp', _startTimestamp!.toIso8601String());
+    }
+    if (_endTimestamp != null) {
+      await pref.setString('endTimestamp', _endTimestamp!.toIso8601String());
+    }
+
     await pref.setBool('notificationsEnabled', _notificationsEnabled);
     await pref.setBool('alertsEnabled', _alertsEnabled);
     await pref.setBool('messagesEnabled', _messagesEnabled);
@@ -78,13 +128,19 @@ class CowProvider with ChangeNotifier {
   void selectCow(Cow cow, int cowId) {
     _selectedCow = cow;
     _selectedCowId = cowId;
+    _saveSettings();
     notifyListeners();
   }
 
   void setSelectedTimeRange(DateTime start, DateTime end) {
     _startTimestamp = start;
     _endTimestamp = end;
+    _saveSettings();
     notifyListeners();
+  }
+
+  int get currentTimestamp {
+    return DateTime.now().millisecondsSinceEpoch ~/ 1000;
   }
 
   void clearSelection() {
@@ -92,6 +148,7 @@ class CowProvider with ChangeNotifier {
     _selectedCowId = null;
     _startTimestamp = null;
     _endTimestamp = null;
+    _saveSettings();
     notifyListeners();
   }
 

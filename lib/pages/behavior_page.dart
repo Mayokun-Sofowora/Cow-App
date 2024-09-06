@@ -61,8 +61,8 @@ class BehaviorPageState extends State<BehaviorPage> {
                 'Select Chart Type',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ),

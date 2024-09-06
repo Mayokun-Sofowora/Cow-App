@@ -2,8 +2,18 @@ import 'package:cow_monitor/services/provider_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
+
+  @override
+  NotificationsPageState createState() => NotificationsPageState();
+}
+
+class NotificationsPageState extends State<NotificationsPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
