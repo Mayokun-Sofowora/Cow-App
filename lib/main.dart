@@ -58,7 +58,7 @@ class CowMonitor extends StatelessWidget {
           themeMode: provider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           home: MainScreen(
             onToggleDarkMode: provider.toggleDarkMode,
-            onStreamSelected: provider.setCurrentStreamUrl,
+            // onStreamSelected: provider.setCurrentStreamUrl,
           ),
         );
       },
@@ -68,12 +68,12 @@ class CowMonitor extends StatelessWidget {
 
 class MainScreen extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
-  final Function(String) onStreamSelected;
+  // final Function(String) onStreamSelected;
 
   const MainScreen({
     super.key,
     required this.onToggleDarkMode,
-    required this.onStreamSelected,
+    // required this.onStreamSelected,
   });
 
   @override

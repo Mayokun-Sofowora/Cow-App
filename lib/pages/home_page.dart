@@ -1,8 +1,5 @@
-import 'package:cow_monitor/services/cow_repository.dart';
-import 'package:cow_monitor/services/provider_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,87 +12,28 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   late VideoPlayerController _controller;
   Map<String, dynamic>? _jsonData;
-  final CowRepository _cowRepository = CowRepository();
 
   @override
   void initState() {
     super.initState();
     _initializeVideoPlayer();
-    _fetchData();
   }
 
-  void _initializeVideoPlayer() {
-    final provider = Provider.of<CowProvider>(context, listen: false);
-    final videoUrl = provider.currentStreamUrl;
+  Future<void> _initializeVideoPlayer() async {
+    const flaskStreamUrl =
+        "http://10.42.0.238:5000/stream_video"; // Flask API endpoint
 
-    if (videoUrl.isNotEmpty) {
-      _controller = VideoPlayerController.networkUrl(
-        Uri.parse(videoUrl),
-      )..initialize().then((_) {
+    try {
+      _controller = VideoPlayerController.networkUrl(Uri.parse(flaskStreamUrl))
+        ..initialize().then((_) {
           setState(() {});
           _controller.play();
         }).catchError((error) {
           _handleVideoError(error);
         });
-    } else {
-      setState(() {
-        _jsonData = {
-          'result': 'error',
-          'message': 'Invalid video URL',
-        };
-      });
+    } catch (error) {
+      _handleVideoError(error);
     }
-  }
-
-  Future<void> _fetchData() async {
-    final provider = Provider.of<CowProvider>(context, listen: false);
-    final timestamp = provider.currentTimestamp;
-
-    final startTime = timestamp - 60; // 1 minute before
-    final endTime = timestamp + 60; // 1 minute after
-
-    try {
-      final objectIds = await _cowRepository.fetchCowIds(startTime, endTime);
-      final objectDataList = await _getCowData(objectIds, startTime, endTime);
-
-      setState(() {
-        _jsonData = {
-          'result': 'success',
-          'data': objectDataList,
-        };
-      });
-    } catch (e) {
-      _handleFetchError(e);
-    }
-  }
-
-  Future<List<List<dynamic>>> _getCowData(
-      List<int> objectIds, int startTime, int endTime) async {
-    final List<List<dynamic>> objectDataList = [];
-    for (var objectId in objectIds) {
-      List<Cow> cowDataList =
-          await _cowRepository.fetchCowData(startTime, endTime, objectId);
-      objectDataList.addAll(cowDataList.map((cowData) => [
-            cowData.x, // X position
-            cowData.y, // Y position
-            cowData.w, // Width
-            cowData.h, // Height
-            cowData.action, // Action
-          ]));
-    }
-    return objectDataList;
-  }
-
-  void _handleFetchError(dynamic error) {
-    if (kDebugMode) {
-      print('Error fetching data: $error');
-    }
-    setState(() {
-      _jsonData = {
-        'result': 'error',
-        'message': error.toString(),
-      };
-    });
   }
 
   void _handleVideoError(dynamic error) {
@@ -155,30 +93,16 @@ class HomePageState extends State<HomePage> {
             height: 300, // Fixed height for video container
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: _controller.value.isInitialized
-                ? _buildVideoPlayer()
+                ? AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  )
                 : const Center(
                     child: CircularProgressIndicator(color: Colors.white),
                   ),
           ),
           const SizedBox(height: 16),
         ],
-      ),
-    );
-  }
-
-  Widget _buildVideoPlayer() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: AspectRatio(
-        aspectRatio: _controller.value.aspectRatio,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            VideoPlayer(_controller),
-            if (_jsonData != null && _jsonData!['result'] == 'success')
-              ..._buildBoundingBoxes(_jsonData!['data']),
-          ],
-        ),
       ),
     );
   }
@@ -197,9 +121,7 @@ class HomePageState extends State<HomePage> {
                 color: Colors.blue[700]),
           ),
           const SizedBox(height: 8),
-          if (_jsonData != null && _jsonData!['result'] == 'success')
-            ..._buildCowActivityList(_jsonData!['data'])
-          else if (_jsonData != null && _jsonData!['result'] == 'error')
+          if (_jsonData != null && _jsonData!['result'] == 'error')
             Text(
               _jsonData!['message'],
               style: const TextStyle(color: Colors.red),
@@ -209,56 +131,6 @@ class HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
-
-  List<Widget> _buildCowActivityList(List<dynamic> data) {
-    final cowProvider = Provider.of<CowProvider>(context);
-    final selectedCowId = cowProvider.selectedCowId;
-
-    return data.map((cow) {
-      final id =
-          selectedCowId ?? cow[0];
-      final action = cow[4];
-      return Card(
-        elevation: 2,
-        margin: const EdgeInsets.only(bottom: 8),
-        child: ListTile(
-          leading: Icon(Icons.pets, color: Colors.blue[700]),
-          title: Text('Cow #$id',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text('Action: $action'),
-        ),
-      );
-    }).toList();
-  }
-
-  List<Widget> _buildBoundingBoxes(List<dynamic> data) {
-    return data.map((box) {
-      final id = box[0];
-      final x = double.tryParse(box[1].toString()) ?? 0;
-      final y = double.tryParse(box[2].toString()) ?? 0;
-      final w = double.tryParse(box[3].toString()) ?? 0;
-      final h = double.tryParse(box[4].toString()) ?? 0;
-      final action = box[5];
-
-      return Positioned(
-        left: x,
-        top: y,
-        width: w,
-        height: h,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.red, width: 2),
-          ),
-          child: Center(
-            child: Text(
-              '$id: $action',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-      );
-    }).toList();
   }
 
   FloatingActionButton _buildFloatingActionButton() {

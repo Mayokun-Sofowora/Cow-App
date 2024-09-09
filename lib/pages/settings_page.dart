@@ -18,50 +18,49 @@ class SettingsPage extends StatefulWidget {
 }
 
 class SettingsPageState extends State<SettingsPage> {
+  // String get selectedStreamUrl {
+  //   final provider = Provider.of<CowProvider>(context, listen: false);
+  //   return provider.currentStreamUrl;
+  // }
 
-  String get selectedStreamUrl {
-    final provider = Provider.of<CowProvider>(context, listen: false);
-    return provider.currentStreamUrl;
-  }
-
-  void _showStreamSelectionDialog(BuildContext context, CowProvider provider) {
-    int? selectedStreamIndex = provider.streams.indexWhere((stream) =>
-        stream['url'] == provider.currentStreamUrl);
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Stream'),
-          content: SizedBox(
-            height: 200,
-            width: 300,
-            child: ListView.builder(
-              itemCount: provider.streams.length,
-              itemBuilder: (context, index) {
-                return RadioListTile<int>(
-                  title: Text(provider.streams[index]['name']!),
-                  value: index,
-                  groupValue: selectedStreamIndex,
-                  onChanged: (value) {
-                    if (value != null) {
-                      provider.setCurrentStreamUrl(provider.streams[value]['url']!);
-                      Navigator.of(context).pop();
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // void _showStreamSelectionDialog(BuildContext context, CowProvider provider) {
+  //   int? selectedStreamIndex = provider.streams.indexWhere((stream) =>
+  //       stream['url'] == provider.currentStreamUrl);
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: const Text('Select Stream'),
+  //         content: SizedBox(
+  //           height: 200,
+  //           width: 300,
+  //           child: ListView.builder(
+  //             itemCount: provider.streams.length,
+  //             itemBuilder: (context, index) {
+  //               return RadioListTile<int>(
+  //                 title: Text(provider.streams[index]['name']!),
+  //                 value: index,
+  //                 groupValue: selectedStreamIndex,
+  //                 onChanged: (value) {
+  //                   if (value != null) {
+  //                     provider.setCurrentStreamUrl(provider.streams[value]['url']!);
+  //                     Navigator.of(context).pop();
+  //                   }
+  //                 },
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         actions: <Widget>[
+  //           TextButton(
+  //             onPressed: () => Navigator.of(context).pop(),
+  //             child: const Text('Cancel'),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -84,13 +83,13 @@ class SettingsPageState extends State<SettingsPage> {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.live_tv),
-            title: const Text('Cow Stream'),
-            onTap: () {
-              _showStreamSelectionDialog(context, provider);
-            },
-          ),
+          // ListTile(
+          //   leading: const Icon(Icons.live_tv),
+          //   title: const Text('Cow Stream'),
+          //   onTap: () {
+          //     _showStreamSelectionDialog(context, provider);
+          //   },
+          // ),
           ListTile(
             leading: const Icon(Icons.notifications),
             title: const Text('Notifications'),
