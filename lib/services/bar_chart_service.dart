@@ -111,6 +111,7 @@ class BarChartService {
           BarChartRodData(
             toY: action.timeSpent.toDouble(), // Use time spent for the Y value
             color: _getBarColor(action.name),
+            borderRadius: BorderRadius.zero,
           ),
         ],
       ));
@@ -130,7 +131,7 @@ class BarChartService {
       case 'Walking':
         return Colors.red;  
       default:
-        return Colors.grey; // Default color for unknown actions
+        return Colors.grey; // Default color for an unknown action
     }
   }
 }

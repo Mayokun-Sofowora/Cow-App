@@ -44,6 +44,7 @@ class BehaviorPageState extends State<BehaviorPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Behavior Record'),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       drawer: Drawer(
         child: ListView(

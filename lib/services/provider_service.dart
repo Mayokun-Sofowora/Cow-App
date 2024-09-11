@@ -1,5 +1,5 @@
+import 'package:cow_monitor/services/cow_service.dart';
 import 'package:flutter/foundation.dart';
-// import 'package:flutter/material.dart';
 import 'package:flutter_cube/flutter_cube.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'cow_repository.dart';
@@ -10,11 +10,11 @@ class CowProvider with ChangeNotifier {
   int? _selectedCowId;
   DateTime? _startTimestamp;
   DateTime? _endTimestamp;
-  List<Cow> _cowData = [];
+  final CowService _cowService = CowService();
 
-  List<Vector3> getCowPath() {
-    return _cowData.map((cow) => Vector3(cow.x, cow.y, 0)).toList();
-  }
+  // List<Vector3> getCowPath() {
+  //   return _cowData.map((cow) => Vector3(cow.x, cow.y, 0)).toList();
+  // }
 
   // Notification settings
   bool _notificationsEnabled = true;
@@ -27,23 +27,13 @@ class CowProvider with ChangeNotifier {
 
   // Dark mode and stream URLs
   bool _isDarkMode = false;
-  // String _currentStreamUrl = 'http://140.116.86.242:25582/stream_video';
-  // final List<Map<String, String>> _streams = [
-  //   {'name': 'Stream Video', 'url': 'http://140.116.86.242:25582/stream_video'},
-  //   {
-  //     'name': 'Pixel Video',
-  //     'url':
-  //         'https://videos.pexels.com/video-files/856065/856065-hd_1920_1080_30fps.mp4'
-  //   },
-  // ];
 
   // Getters for cow selection
   Cow? get selectedCow => _selectedCow;
   int? get selectedCowId => _selectedCowId;
   DateTime? get startTimestamp => _startTimestamp;
   DateTime? get endTimestamp => _endTimestamp;
-  final List<Vector3> _cowPath =
-      []; // Add this to your CowProvider to store path data.
+  List<Vector3> _cowPath = [];
 
   // Getters for notification settings
   bool get notificationsEnabled => _notificationsEnabled;
@@ -54,26 +44,28 @@ class CowProvider with ChangeNotifier {
   bool get emailNotifications => _emailNotifications;
   bool get smsNotifications => _smsNotifications;
   bool get pushNotifications => _pushNotifications;
-  // String get currentStreamUrl => _currentStreamUrl;
-
-  // Getters for stream URLs
-  // List<Map<String, String>> get streams => _streams;
 
   Future<void> loadCowData(int startTime, int endTime) async {
-    if (_selectedCowId != null) {
-      CowRepository cowRepository = CowRepository();
-      final activities =
-          await cowRepository.fetchCowData(startTime, endTime, _selectedCowId!);
-      List<Vector3> path = [];
-      for (var activity in activities) {
-        path.add(Vector3(activity.x.toDouble(), activity.y.toDouble(), 0));
-      }
-      if (kDebugMode) {
-        print("Loaded path data: $path");
-      } // Debug print
-      _cowData = path.cast<Cow>();
+    if (_selectedCowId == null) return;
+      // final activities =
+      //     await cowRepository.fetchCowData(startTime, endTime, _selectedCowId!);
+      final cowData = await _cowService.fetchCowsDataForSelectedCow(
+        selectedCowId!,
+        DateTime.fromMillisecondsSinceEpoch(startTime * 1000),
+        DateTime.fromMillisecondsSinceEpoch(endTime * 1000),
+      );
+      // List<Vector3> path = [];
+      // for (var activity in activities) {
+      //   // Calculate center point of bounding box
+      //   double centerX = activity.x + (activity.w / 2);
+      //   double centerY = activity.y + (activity.h / 2);
+      //   path.add(Vector3(centerX, centerY, 0));
+      // }
+      // _cowPath.clear(); // Reset path
+      // _cowPath.addAll(path);
+      _cowPath = cowData.map((cow) => Vector3(cow.x, cow.y, 0)).toList();
       notifyListeners();
-    }
+    
   }
 
   // Getter for the cow path
@@ -225,10 +217,4 @@ class CowProvider with ChangeNotifier {
     _saveNotificationSettings();
     notifyListeners();
   }
-
-  // void setCurrentStreamUrl(String url) {
-  //   _currentStreamUrl = url;
-  //   _saveSettings();
-  //   notifyListeners();
-  // }
 }
